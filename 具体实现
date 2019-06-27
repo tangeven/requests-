@@ -1,0 +1,61 @@
+import requests
+import json
+from pprint import pprint
+from lxml import etree
+import re
+
+num = 0
+
+def downloadpic(url):
+　　‘’‘下载图片’‘’
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    }
+    response = requests.get(url,headers)
+
+    with open('./mm{}.jepg'.format(num),'wb') as f:
+        if response.content:
+            f.write(response.content)
+
+def get_next_url(html_dict):
+    '''拿到下一页url'''
+    next_url = html_dict['paging']
+    next = next_url['next']
+    is_end = next_url['is_end']
+    return next,is_end
+
+
+def get_response(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36"
+    }
+    response = requests.get(url,headers=headers)
+    html = response.content.decode(encoding='utf-8')
+    return html
+
+def run():
+    '''实现主要逻辑'''
+    global num
+   
+    is_end = False
+    while is_end == False:
+        html = get_response(next)
+        html_dict = json.loads(html)
+        data_list = html_dict['data']
+        for i in data_list:
+            info = i['content']
+            # print(info)
+            # print(type(info))
+            # print('-'*100)
+            result = re.findall(r'(https.*?jpg)',info)
+            for res in result:
+                pattern = re.compile(r"(https://.*jpg)")
+                res = pattern.findall(res)[0]
+                print(res)
+                downloadpic(res)
+                num += 1
+            print(result)
+            print('-' * 100)
+        next,is_end = get_next_url(html_dict)
+
+
